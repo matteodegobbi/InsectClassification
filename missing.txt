@@ -1,0 +1,8 @@
+[array([array(['GALSC001-18'], dtype='<U11')], dtype=object),
+ array([array(['OPPBA263-17'], dtype='<U11')], dtype=object),
+ array([array(['OPPHK701-17'], dtype='<U11')], dtype=object),
+ array([array(['OPPAK453-17'], dtype='<U11')], dtype=object),
+ array([array(['OPPZA641-17'], dtype='<U11')], dtype=object),
+ array([array(['OPPZA893-17'], dtype='<U11')], dtype=object),
+ array([array(['JBHCJ881-12'], dtype='<U11')], dtype=object),
+ array([array(['JBHCJ888-12'], dtype='<U11')], dtype=object)]
