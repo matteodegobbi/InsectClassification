@@ -2,6 +2,7 @@
 
 ## Link da leggere 
 - https://pytorch.org/tutorials/beginner/dcgan_faces_tutorial.html
+- https://towardsdatascience.com/https-medium-com-noa-weiss-the-hitchhikers-guide-to-hierarchical-classification-f8428ea1e076
 ### DNA
 - https://machinelearningmastery.com/why-one-hot-encode-data-in-machine-learning/
 - https://elferachid.medium.com/one-hot-encoding-dna-92a1c29ba15a
