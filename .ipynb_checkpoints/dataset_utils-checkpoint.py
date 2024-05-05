@@ -3,7 +3,9 @@ import pandas as pd
 from typing import List
 from sklearn.model_selection import train_test_split
 import random 
-
+import torch
+from torchvision.utils import save_image
+import os 
 def one_hot_encoding(nucleotide: str, seq_len=658) -> np.ndarray:
     # Cutting the sequence if it is longer than a pre-defined value seq_len
     if len(nucleotide) > seq_len:
@@ -97,3 +99,34 @@ def count_trainable_parameters(model):
     model_parameters = filter(lambda p: p.requires_grad, model.parameters())
     params = sum([np.prod(p.size()) for p in model_parameters])
     return params
+
+class Save_samples_params():
+    def __init__(self,latent_tensors,sample_random_classes,sample_dir):
+        self.latent_tensors = latent_tensors
+        self.sample_random_classes = sample_random_classes
+        self.sample_dir = sample_dir
+class Fit_params():
+    def __init__(self,discriminator_optimizer,generator_optimizer,discriminator,generator,dataloaders,device,writer,batch_size,n_classes,latent_size):
+        self.discriminator_optimizer = discriminator_optimizer
+        self.generator_optimizer = generator_optimizer
+        self.discriminator = discriminator
+        self.generator = generator
+        self.dataloaders = dataloaders
+        self.device = device
+        self.writer = writer
+        self.batch_size = batch_size
+        self.n_classes = n_classes
+        self.latent_size = latent_size
+def save_samples(index, save_p : Save_samples_params, generator ,writer,show=True):
+    with torch.no_grad():
+        fake_images = generator(save_p.latent_tensors,save_p.sample_random_classes)
+        fake_fname = 'generated-images-{0:0=4d}.png'.format(index)
+        save_image(denorm(fake_images), os.path.join(save_p.sample_dir, fake_fname), nrow=8)
+        writer.add_image('sample image',denorm(fake_images[0]),global_step=index)
+        print('Saving', fake_fname)
+        if show:
+            fig, ax = plt.subplots(figsize=(8, 8))
+            ax.set_xticks([]); ax.set_yticks([])
+            ax.imshow(make_grid(fake_images.cpu().detach(), nrow=8).permute(1, 2, 0))
+def denorm(img_tensors):
+    return img_tensors * 0.5 + 0.5
