@@ -146,23 +146,23 @@ class Discriminator(torch.nn.Module):
                                    nn.LeakyReLU(0.2,inplace=True),
                                    nn.Dropout(0.5))
         self.conv2 = nn.Sequential(nn.Conv2d(n_feature_maps,n_feature_maps*2,4,1,0,bias=False),
-                                   nn.BatchNorm2d(n_feature_maps*2),
+                                   #nn.BatchNorm2d(n_feature_maps*2),
                                    nn.LeakyReLU(0.2,inplace=True),
                                    nn.Dropout(0.5))
         self.conv3 = nn.Sequential(nn.Conv2d(n_feature_maps*2,n_feature_maps*4,4,2,1,bias=False),
-                                   nn.BatchNorm2d(n_feature_maps*4),
+                                   #nn.BatchNorm2d(n_feature_maps*4),
                                    nn.LeakyReLU(0.2,inplace=True),
                                    nn.Dropout(0.5))
         self.conv4 = nn.Sequential(nn.Conv2d(n_feature_maps*4,n_feature_maps*8,4,1,0,bias=False),
-                                   nn.BatchNorm2d(n_feature_maps*8),
+                                   #nn.BatchNorm2d(n_feature_maps*8),
                                    nn.LeakyReLU(0.2,inplace=True),
                                    nn.Dropout(0.5))
         self.conv5 = nn.Sequential(nn.Conv2d(n_feature_maps*8,n_feature_maps*16,4,2,1,bias=False),
-                                   nn.BatchNorm2d(n_feature_maps*16),
+                                   #nn.BatchNorm2d(n_feature_maps*16),
                                    nn.LeakyReLU(0.2,inplace=True),
                                    nn.Dropout(0.5))
         self.conv6 = nn.Sequential(nn.Conv2d(n_feature_maps*16,n_feature_maps*16,4,1,0,bias=False),
-                                   nn.BatchNorm2d(n_feature_maps*16),
+                                   #nn.BatchNorm2d(n_feature_maps*16),
                                    nn.LeakyReLU(0.2,inplace=True),
                                    nn.Dropout(0.5))
         
@@ -334,7 +334,7 @@ def fit(epochs,fit_p : Fit_params, save_p : Save_samples_params,start_idx=0,late
             # Train discriminator
             real_images = real_images.to(fit_p.device)
             real_classes = real_classes.to(fit_p.device)
-            for k in range(8):
+            for k in range(4):
                 loss_d, real_score, fake_score, class_accuracy_real, class_accuracy_fake = train_discriminator(real_images, real_classes,fit_p.discriminator_optimizer,fit_p.discriminator,fit_p.generator,fit_p.batch_size,fit_p.latent_size,fit_p.device,fit_p.n_classes)
             loss_g = train_generator(fit_p.generator_optimizer,fit_p.generator,fit_p.discriminator,fit_p.batch_size,fit_p.latent_size,fit_p.device,fit_p.n_classes)
             

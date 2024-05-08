@@ -130,3 +130,16 @@ def save_samples(index, save_p : Save_samples_params, generator ,writer,show=Tru
             ax.imshow(make_grid(fake_images.cpu().detach(), nrow=8).permute(1, 2, 0))
 def denorm(img_tensors):
     return img_tensors * 0.5 + 0.5
+
+def species_label_to_genus_label(df : pd.DataFrame, image_dataset):
+    genuses = df['genus_name'].unique()
+    species = df['species_name'].unique()
+    img2dna = get_imgs_bold_id(image_dataset,df)
+    specie2genus = {}
+    for specie in species:
+        label_specie = image_dataset.class_to_idx[specie.replace(" ","_")]
+        genus = df.loc[df['species_name']==specie]['genus_name'].unique()[0]
+        label_genus = np.where(genuses == genus)[0][0]
+        #specie2genus[specie] = genus
+        specie2genus[label_specie] = label_genus
+    return specie2genus
