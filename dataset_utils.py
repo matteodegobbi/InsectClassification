@@ -41,7 +41,7 @@ def get_imgs_bold_id(image_dataset,df):
               not_found_images.append(image_name_csv)
   return img2dna
 
-def data_split(df, test_ratio,drop_labels = False):
+def data_split(df, test_ratio,drop_labels = False, random_state = 42):
     test = []
     genus_count = df.groupby('genus_name')['species_name'].nunique()
     
@@ -62,7 +62,7 @@ def data_split(df, test_ratio,drop_labels = False):
         X = df_remaining
         X_undescribed = df_undescribed
     y_undescribed = df_undescribed['species_name']
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_ratio, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_ratio, random_state=random_state)
     y_test = pd.concat([y_test,y_undescribed])
     X_test = pd.concat([X_test,X_undescribed])
     return X_train, X_test, y_train, y_test
@@ -106,7 +106,7 @@ class Save_samples_params():
         self.sample_random_classes = sample_random_classes
         self.sample_dir = sample_dir
 class Fit_params():
-    def __init__(self,discriminator_optimizer,generator_optimizer,discriminator,generator,dataloaders,device,writer,batch_size,n_classes,latent_size):
+    def __init__(self,discriminator_optimizer,generator_optimizer,discriminator,generator,dataloaders,device,writer,batch_size,n_classes,latent_size,described_species_labels):
         self.discriminator_optimizer = discriminator_optimizer
         self.generator_optimizer = generator_optimizer
         self.discriminator = discriminator
@@ -117,6 +117,7 @@ class Fit_params():
         self.batch_size = batch_size
         self.n_classes = n_classes
         self.latent_size = latent_size
+        self.described_species_labels = described_species_labels
 def save_samples(index, save_p : Save_samples_params, generator ,writer,show=True):
     with torch.no_grad():
         fake_images = generator(save_p.latent_tensors,save_p.sample_random_classes)
