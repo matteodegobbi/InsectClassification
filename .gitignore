@@ -4,3 +4,4 @@ generated/
 checkpoints/
 images_no_species
 .DS_Store
+*.pt
