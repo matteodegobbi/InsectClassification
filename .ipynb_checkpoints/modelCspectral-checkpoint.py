@@ -87,7 +87,7 @@ class Tpose(nn.Module):
         return self.main(x)
         
 class Generator(nn.Module):
-    def __init__(self, n_feature_maps=1024,noise_size=100,n_classes=1050,embedding_size=50):
+    def __init__(self, n_feature_maps=1024,noise_size=100,n_classes=1050,embedding_size=1000):
         super(Generator, self).__init__()
         self.embed = nn.Embedding(n_classes,embedding_size)
         
@@ -112,6 +112,10 @@ class Generator(nn.Module):
 
     def forward(self, latent_noise,class_label):
         class_embedding = self.embed(class_label)
+        #print(class_embedding.shape)
+        class_embedding = class_embedding/torch.norm(class_embedding,dim=1,keepdim=True)
+        
+        #print(torch.norm(class_embedding[0]))
         class_embedding = class_embedding.unsqueeze(-1).unsqueeze(-1)
         concatenated_input = torch.cat((latent_noise,class_embedding),dim=1)
         out = self.main(concatenated_input)
