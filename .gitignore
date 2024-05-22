@@ -7,3 +7,4 @@ images_no_species
 *.pt
 __pycache__
 runs/
+.ipynb_checkpoints/
