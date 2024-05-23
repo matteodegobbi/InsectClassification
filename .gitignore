@@ -8,3 +8,6 @@ images_no_species
 __pycache__
 runs/
 .ipynb_checkpoints/
+models/
+samples/
+pretrain_dataset/
