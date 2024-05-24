@@ -184,7 +184,7 @@ class Discriminator(nn.Module):
             embed = self.linear2(h)
             proxy = self.embedding(label)
             if self.normalize_d_embed:
-                embed = F.normalize(embed, dim=1)
+                embed = F.normalize(embed, dim=1)#NORMALIZE FEATURE EMBEDDING TO PREVENT EARLY COLLAPSE
                 proxy = F.normalize(proxy, dim=1)
         return {
             "h": h,
