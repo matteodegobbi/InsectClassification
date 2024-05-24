@@ -194,6 +194,35 @@ class Discriminator(nn.Module):
             "cls_output": cls_output,
             "label": label,
         }
+    def extract_features(self, x, label, eval=False, adc_fake=False):
+        with torch.cuda.amp.autocast() if self.mixed_precision and not eval else misc.dummy_context_mgr() as mp:
+            embed, proxy, cls_output = None, None, None
+            h = x
+            for index, blocklist in enumerate(self.blocks):
+                for block in blocklist:
+                    h = block(h)
+            bottom_h, bottom_w = h.shape[2], h.shape[3]
+            feature = torch.flatten(h,start_dim=1)
+            h = self.activation(h)
+            h = torch.sum(h, dim=[2, 3])
+    
+            # adversarial training
+            adv_output = torch.squeeze(self.linear1(h))
+    
+            embed = self.linear2(h)
+            proxy = self.embedding(label)
+            if self.normalize_d_embed:
+                embed = F.normalize(embed, dim=1)#NORMALIZE FEATURE EMBEDDING TO PREVENT EARLY COLLAPSE
+                proxy = F.normalize(proxy, dim=1)
+        return {
+            "h": h,
+            "adv_output": adv_output,
+            "embed": embed,
+            "proxy": proxy,
+            "cls_output": cls_output,
+            "label": label,
+            "feature":feature
+        }
 
 
 class GenBlock(nn.Module):
