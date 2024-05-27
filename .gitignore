@@ -11,3 +11,4 @@ runs/
 models/
 pretrain_dataset/
 samples/
+__pycache__/*
