@@ -144,3 +144,53 @@ def species_label_to_genus_label(df : pd.DataFrame, image_dataset):
         #specie2genus[specie] = genus
         specie2genus[label_specie] = label_genus
     return specie2genus
+
+def top2_choice(image_val_labels, val_predicted_labels, described_species_labels, val_predicted_probs, species2genus):
+    tprs = []
+    fprs = []
+    correct_genus_rate = []
+    correct_species_rate = []
+    for t in range(0,100,1):
+        entropy_threshold = t/100.0
+        n_undescribed_samples = 0
+        n_described_samples = 0
+        n_correct_undescribed_samples = 0
+        n_correct_described_samples = 0
+        n_correct_genus = 0 
+        n_correct_species = 0 
+        for i in range(len(image_val_labels)):
+            
+            label_best_specie = val_predicted_labels[i]
+           
+            assert(val_predicted_labels[i]==val_predicted_probs[i].argmax())
+            genus_of_best_species = species2genus[label_best_specie.item()]
+            
+            sorted_probs = np.sort(val_predicted_probs[i])
+            sorted_probs = sorted_probs[::-1]
+            
+            prob_diff = abs(sorted_probs[0] - sorted_probs[1])
+            
+            if image_val_labels[i].item() in described_species_labels:
+                #tn
+                n_described_samples +=1
+                if prob_diff >= entropy_threshold:
+                    n_correct_described_samples+=1
+                    if label_best_specie == image_val_labels[i]:
+                        n_correct_species+=1
+            else:
+                #tp
+                n_undescribed_samples+=1
+                if prob_diff < entropy_threshold:
+                    n_correct_undescribed_samples+=1
+                    real_genus = species2genus[image_val_labels[i].item()]
+                    predicted_genus = genus_of_best_species
+                    if real_genus == predicted_genus:
+                        n_correct_genus+=1
+            
+                
+        tprs.append(n_correct_undescribed_samples/n_undescribed_samples) # TPR = recall = sensitivity
+        fprs.append(1-n_correct_described_samples/n_described_samples) # 1-TNR = 1 - specificity
+        correct_genus_rate.append(n_correct_genus/n_undescribed_samples)
+        correct_species_rate.append(n_correct_species/n_described_samples)
+
+        return tprs, fprs, correct_genus_rate, correct_species_rate
