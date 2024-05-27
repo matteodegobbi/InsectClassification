@@ -6,6 +6,10 @@ import random
 import torch
 from torchvision.utils import save_image
 import os 
+import torchvision
+from torchvision import transforms
+from torch.utils.data import Dataset
+
 def one_hot_encoding(nucleotide: str, seq_len=658) -> np.ndarray:
     # Cutting the sequence if it is longer than a pre-defined value seq_len
     if len(nucleotide) > seq_len:
@@ -95,6 +99,55 @@ def image_splits_from_df(X_train, X_validation,X_test,image_dataset):
             raise Exception(f"Exception: Filename {filename} isn't in any of the splits")
     return train_indices,val_indices,test_indices
 
+def get_dataset(image_path:str, csv_path:str,batch_size:int, shuffle_loaders:bool = False):
+    df = pd.read_csv(csv_path,index_col=0)
+    imsize = 64
+    tform = transforms.Compose([transforms.Resize((imsize,imsize)),
+                                transforms.PILToTensor(),
+                                transforms.ConvertImageDtype(torch.float),
+                                transforms.Normalize(0.5,0.5)])
+    image_dataset = torchvision.datasets.ImageFolder(image_path, transform=tform)
+
+    img2dna = get_imgs_bold_id(image_dataset,df)
+
+    nucleotides = df[['nucleotide','species_name','genus_name','processid','image_urls']]
+    colonna_dna = df.loc[:,"nucleotide"]
+    nucleotides.loc[:,'nucleotide'] = colonna_dna.apply(one_hot_encoding)
+    random.seed(42)
+    X_train_val, X_test, y_train_val, y_test = data_split(nucleotides,0.2,random_state=42)
+    train_data = X_train_val
+    train_data['species_name'] = y_train_val
+    X_train, X_validation, y_train, y_validation = data_split(train_data,0.2,drop_labels=False,random_state=42)
+    train_indices, val_indices, test_indices = image_splits_from_df(X_train,X_validation,X_test,image_dataset)
+     
+    class WholeDataset(Dataset):
+        def __init__(self, data, transform=None):
+            self.data = data
+            self.targets = data.targets            
+        def __getitem__(self, index):
+            x = self.data[index][0]
+            y = self.targets[index]
+            return x, y
+        
+        def __len__(self):
+            return len(self.data)
+            
+    whole_dataset = WholeDataset(image_dataset)
+    n_classes = np.unique(whole_dataset.targets).shape[0]
+    train_imgs = torch.utils.data.Subset(whole_dataset, train_indices)
+    val_imgs = torch.utils.data.Subset(whole_dataset, val_indices)
+    test_imgs = torch.utils.data.Subset(whole_dataset, test_indices)
+
+    train_loader = torch.utils.data.DataLoader(train_imgs, batch_size=batch_size,shuffle=shuffle_loaders, num_workers=2)
+    val_loader = torch.utils.data.DataLoader(val_imgs, batch_size=batch_size,shuffle=shuffle_loaders, num_workers=2)
+    test_loader = torch.utils.data.DataLoader(test_imgs, batch_size=batch_size,shuffle=shuffle_loaders, num_workers=2)
+    dataloaders = {"train":train_loader,"val":val_loader,"test":test_loader}
+    dataset_sizes = {'train': len(train_imgs.indices), 'val':len(val_imgs.indices),'test':len(test_imgs.indices)}
+    
+    described_species_labels = np.array([image_dataset.targets[i] for i in train_indices])
+    described_species_labels = np.unique(described_species_labels)
+    
+    return dataloaders,dataset_sizes,described_species_labels,n_classes
 def count_trainable_parameters(model):
     model_parameters = filter(lambda p: p.requires_grad, model.parameters())
     params = sum([np.prod(p.size()) for p in model_parameters])
