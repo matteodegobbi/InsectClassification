@@ -74,7 +74,7 @@ def extract_image_features(model : nn.Module, device :str ,save_to_disk : bool =
 
     if save_to_disk:
         torch.save(torch.tensor(train_features),save_name_prefix+'img_train_features.pt')
-        torch.save(torch.tensor(train_labels),save_name_prefix+'img_train_labels')
+        torch.save(torch.tensor(train_labels),save_name_prefix+'img_train_labels.pt')
     torch.cuda.empty_cache()
 
 
@@ -94,8 +94,8 @@ def extract_image_features(model : nn.Module, device :str ,save_to_disk : bool =
 
 
     if save_to_disk:
-        torch.save(torch.tensor(train_features),save_name_prefix+'img_val_features.pt')
-        torch.save(torch.tensor(train_labels),save_name_prefix+'img_val_labels')
+        torch.save(torch.tensor(val_features),save_name_prefix+'img_val_features.pt')
+        torch.save(torch.tensor(val_labels),save_name_prefix+'img_val_labels.pt')
     torch.cuda.empty_cache()
 
 
@@ -115,8 +115,8 @@ def extract_image_features(model : nn.Module, device :str ,save_to_disk : bool =
 
 
     if save_to_disk:
-        torch.save(torch.tensor(train_features),save_name_prefix+'img_test_features.pt')
-        torch.save(torch.tensor(train_labels),save_name_prefix+'img_test_labels')
+        torch.save(torch.tensor(test_features),save_name_prefix+'img_test_features.pt')
+        torch.save(torch.tensor(test_labels),save_name_prefix+'img_test_labels.pt')
 
     return (train_features,train_labels),(val_features,val_labels), (test_features,test_labels)
 
@@ -173,30 +173,50 @@ def extract_expanded_dna_features(model : nn.Module,device :str ,save_to_disk : 
     d_train = DNAdataset(X_train.values, y_train.values)
     d_val = DNAdataset(X_validation.values, y_validation.values)
     d_test = DNAdataset(X_test.values, y_test.values)
-    dataloader_train = DataLoader(d_train, batch_size=len(d_train),shuffle=False)
-    dataloader_val = DataLoader(d_val, batch_size=len(d_val),shuffle=False)
-    dataloader_test = DataLoader(d_test, batch_size=len(d_test),shuffle=False)
+    dataloader_train = DataLoader(d_train, batch_size=32,shuffle=False)
+    dataloader_val = DataLoader(d_val, batch_size=32,shuffle=False)
+    dataloader_test = DataLoader(d_test, batch_size=32,shuffle=False)
     dataloaders = {'train':dataloader_train,'val':dataloader_val,'test':dataloader_test}
     dataset_sizes = {'train': d_train.data.shape[0], 'val':d_val.data.shape[0],'test':d_test.data.shape[0]}
     ###actual extraction of the feature from the model
     model.eval()
     with torch.no_grad():
+        train_features = []
+        train_dna_labels = np.array([]) 
         for dnas,labels in dataloaders['train']:
             dnas = dnas.to(device)
-            train_dna_features = model.feature_extract(dnas)
-            train_dna_labels = labels
+            features = model.feature_extract(dnas)
+            train_dna_labels = np.concatenate((train_dna_labels, labels.cpu().numpy()))
+            train_features.append(features.cpu().numpy())
+            torch.cuda.empty_cache()
+        train_dna_features = torch.tensor(np.concatenate(train_features))
+        train_dna_labels = torch.tensor(train_dna_labels)
+        
+        val_features = []
+        val_dna_labels = np.array([]) 
         for dnas,labels in dataloaders['val']:
             dnas = dnas.to(device)
-            val_dna_features = model.feature_extract(dnas)
-            val_dna_labels = labels
+            features = model.feature_extract(dnas)
+            val_dna_labels = np.concatenate((val_dna_labels, labels.cpu().numpy()))
+            val_features.append(features.cpu().numpy())
+            torch.cuda.empty_cache()
+        val_dna_features = torch.tensor(np.concatenate(val_features))
+        val_dna_labels = torch.tensor(val_dna_labels)
+        
+        test_features = []
+        test_dna_labels = np.array([]) 
         for dnas,labels in dataloaders['test']:
             dnas = dnas.to(device)
-            test_dna_features = model.feature_extract(dnas)
-            test_dna_labels = labels
+            features = model.feature_extract(dnas)
+            test_dna_labels = np.concatenate((test_dna_labels, labels.cpu().numpy()))
+            test_features.append(features.cpu().numpy())
+            torch.cuda.empty_cache()
+        test_dna_features = torch.tensor(np.concatenate(test_features))
+        test_dna_labels = torch.tensor(test_dna_labels)
 
-        train_dna_features = train_dna_features.cpu()
+        '''train_dna_features = train_dna_features.cpu()
         val_dna_features = val_dna_features.cpu()
-        test_dna_features = test_dna_features.cpu()
+        test_dna_features = test_dna_features.cpu()'''
         
         #####get indices in imgs corresponding to dna indices
 
@@ -246,10 +266,10 @@ def extract_expanded_dna_features(model : nn.Module,device :str ,save_to_disk : 
 
         if save_to_disk:
             torch.save(torch.tensor(expanded_train_dna_features),save_name_prefix+'dna_train_features.pt')
-            torch.save(torch.tensor(expanded_train_dna_labels),save_name_prefix+'dna_train_labels')
+            torch.save(torch.tensor(expanded_train_dna_labels),save_name_prefix+'dna_train_labels.pt')
             torch.save(torch.tensor(expanded_val_dna_features),save_name_prefix+'dna_val_features.pt')
-            torch.save(torch.tensor(expanded_val_dna_labels),save_name_prefix+'dna_val_labels')
+            torch.save(torch.tensor(expanded_val_dna_labels),save_name_prefix+'dna_val_labels.pt')
             torch.save(torch.tensor(expanded_test_dna_features),save_name_prefix+'dna_test_features.pt')
-            torch.save(torch.tensor(expanded_test_dna_labels),save_name_prefix+'dna_test_labels')
+            torch.save(torch.tensor(expanded_test_dna_labels),save_name_prefix+'dna_test_labels.pt')
         
     return (expanded_train_dna_features,expanded_train_dna_labels),(expanded_val_dna_features,expanded_val_dna_labels), (expanded_test_dna_features,expanded_test_dna_labels)
