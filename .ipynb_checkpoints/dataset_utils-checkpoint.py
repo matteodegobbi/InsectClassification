@@ -136,13 +136,15 @@ def get_dataset(image_path:str, csv_path:str,batch_size:int, shuffle_loaders:boo
     n_classes = np.unique(whole_dataset.targets).shape[0]
     train_imgs = torch.utils.data.Subset(whole_dataset, train_indices)
     val_imgs = torch.utils.data.Subset(whole_dataset, val_indices)
+    train_val_imgs = torch.utils.data.Subset(whole_dataset, train_indices+val_indices)
     test_imgs = torch.utils.data.Subset(whole_dataset, test_indices)
 
     train_loader = torch.utils.data.DataLoader(train_imgs, batch_size=batch_size,shuffle=shuffle_loaders, num_workers=2)
     val_loader = torch.utils.data.DataLoader(val_imgs, batch_size=batch_size,shuffle=shuffle_loaders, num_workers=2)
+    train_val_loader = torch.utils.data.DataLoader(train_val_imgs, batch_size=batch_size,shuffle=shuffle_loaders, num_workers=2)
     test_loader = torch.utils.data.DataLoader(test_imgs, batch_size=batch_size,shuffle=shuffle_loaders, num_workers=2)
-    dataloaders = {"train":train_loader,"val":val_loader,"test":test_loader}
-    dataset_sizes = {'train': len(train_imgs.indices), 'val':len(val_imgs.indices),'test':len(test_imgs.indices)}
+    dataloaders = {"train":train_loader,"val":val_loader,"test":test_loader,'train_val':train_val_loader}
+    dataset_sizes = {'train': len(train_imgs.indices), 'val':len(val_imgs.indices),'test':len(test_imgs.indices),'train_val':len(train_val_imgs.indices)}
     
     described_species_labels = np.array([image_dataset.targets[i] for i in train_indices])
     described_species_labels = np.unique(described_species_labels)
