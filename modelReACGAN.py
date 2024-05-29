@@ -210,9 +210,9 @@ class Discriminator(nn.Module):
                 for block in blocklist:
                     h = block(h)
             bottom_h, bottom_w = h.shape[2], h.shape[3]
-            feature = torch.flatten(h,start_dim=1)
             h = self.activation(h)
             h = torch.sum(h, dim=[2, 3])
+            feature = torch.flatten(h,start_dim=1)
     
             # adversarial training
             adv_output = torch.squeeze(self.linear1(h))
