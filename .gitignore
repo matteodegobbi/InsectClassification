@@ -6,6 +6,7 @@ images_no_species
 .DS_Store
 *.pt
 __pycache__
+__pycache__/
 runs/
 .ipynb_checkpoints/
 models/
