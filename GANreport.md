@@ -54,5 +54,39 @@ In literature (TODO: metti link) this loss is supposed to prevent the case where
 From our experience this loss yielded worse results than using Binary Cross Entropy, but we only tried with the gradient clipping version and not with the gradient penalty version which is supposed to be more stable.
 We hypothesize that this failed attempt maybe due to the high number of classes which makes the critic focus on lowering the classification loss instead of the Wasserstein loss but more research is necessary.
 
+### ConvTranspose2D vs ResizeConv
+In the generator we need to start from a vector of noise concatenated with a class embedding and end up with a 64x64x3 tensor representing an image, to achieve this normally a ConvTranspose2D layer can be used (like we did in DCGAN) but with bigger images or with strides that are not divisors of the kernel size this layer leads to grid-like artifacts in the output images.
+To try to obviate this problem we tried using an approach described in "https://distill.pub/2016/deconv-checkerboard/" of using layers in the generator composed of an upsample layer that uses nearest neighbor (or bilinear) followed by a regular convolutional layer, the only learnable parameters with this approach are in the convolutional layers.
+From our experience this layer solves the problem of the artifacts but leads to very unstable training, either the generator or discriminator loss explodes while the other loss goes to 0.
+For example (TODO: inserisci immagine) here the generator loss explodes, the GAN produces images with the correct insect shape but the colors and details are not present.
+This approach could be useful when it's possible to stabilize training, this is demonstrated by the ReACGAN we used later, which uses this upsample convolution approach but makes the training stable using additional methods like residual connections and spectral normalization.
 
+### Spectral normalization
+
+Spectral normalization is a method introduced in https://arxiv.org/abs/1802.05957 to stabilize GAN training, it avoids exploding gradients of the discriminator and it can help mitigating mode collapse, we decided to try this approach because we were experiencing mode collapse early in the training. This mode collapse problem is well known when using ACGANs with a high number of classes this is because early in the training the discriminator has big gradients and only learns to differentiate classes TODO: aggiungi (https://arxiv.org/pdf/2111.01118)
+
+### Results of using ACGAN
+
+With ACGAN we were able to obtain images of good quality conditioned on the species, but often the GAN presented either mode collapse (producing only a few species independently of the class embedding) or a different type of collapse where the noise vector is basically ignored in the generation of the image. In the latter case the generator learns to generate one realistic sample for every species and only uses the class embedding to generate the images ignoring the noise vector.
+
+(TODO: Includi esempio collapse dove il rumore viene ignorato)
+
+The spectral normalization greatly reduces these collapse problems.
+
+We used a benchmark with a Random Forest to decide which GAN architectures where worth investigating further:
+We extracted features using the discriminator and used the features of the training set to learn a Random Forest. 
+Then we compute the species and genus accuracy on the validation set features, these are not the final accuracies because when we compute the species accuracy we always output the species independently if it's a described or undescribed sample but serve as a good benchmark to determine whether the features are descriptive or not. The same reasoning for the genus accuracy.
+
+---------
+Dati da fare una tabella
+Random Forest ACGAN modelC no spectral norm, species: 0.2086, genus: 0.5099
+ReACGAN pretraining+12 epochs,               species: 0.2519, genus: 0.5840
+nmanca da mettere wgan, resize conv e spectral norm modelC e anche altre versioni della reacgan
+---------
+
+To try to 
 ## ReACGAN
+
+
+## 
+USING GENUS AS LABELS?????
