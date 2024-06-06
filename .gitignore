@@ -5,3 +5,9 @@ checkpoints/
 images_no_species
 .DS_Store
 *.pt
+runs/
+__pycache__/
+models/
+pretrain_dataset/
+samples/
+utils/

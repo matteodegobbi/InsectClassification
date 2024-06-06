@@ -2,7 +2,7 @@ import torch
 from torch import nn 
 from torch.utils.tensorboard import SummaryWriter
 import numpy as np
-from torch.nn.utils.parametrizations import spectral_norm
+
 import os
 from torchvision.utils import make_grid
 import matplotlib.pyplot as plt
@@ -12,26 +12,26 @@ class Discriminator(torch.nn.Module):
     def __init__(self,n_feature_maps=64,n_classes=1050):
         super(Discriminator, self).__init__()
         #input 3x64x64
-        self.conv1 = nn.Sequential(spectral_norm(nn.Conv2d(3,n_feature_maps,4,2,1,bias=False)),
+        self.conv1 = nn.Sequential(nn.Conv2d(3,n_feature_maps,4,2,1,bias=False),
                                    nn.LeakyReLU(0.2,inplace=True),
                                    nn.Dropout(0.5))
-        self.conv2 = nn.Sequential(spectral_norm(nn.Conv2d(n_feature_maps,n_feature_maps*2,4,1,0,bias=False)),
+        self.conv2 = nn.Sequential(nn.Conv2d(n_feature_maps,n_feature_maps*2,4,1,0,bias=False),
                                    nn.BatchNorm2d(n_feature_maps*2),
                                    nn.LeakyReLU(0.2,inplace=True),
                                    nn.Dropout(0.5))
-        self.conv3 = nn.Sequential(spectral_norm(nn.Conv2d(n_feature_maps*2,n_feature_maps*4,4,2,1,bias=False)),
+        self.conv3 = nn.Sequential(nn.Conv2d(n_feature_maps*2,n_feature_maps*4,4,2,1,bias=False),
                                    nn.BatchNorm2d(n_feature_maps*4),
                                    nn.LeakyReLU(0.2,inplace=True),
                                    nn.Dropout(0.5))
-        self.conv4 = nn.Sequential(spectral_norm(nn.Conv2d(n_feature_maps*4,n_feature_maps*8,4,1,0,bias=False)),
+        self.conv4 = nn.Sequential(nn.Conv2d(n_feature_maps*4,n_feature_maps*8,4,1,0,bias=False),
                                    nn.BatchNorm2d(n_feature_maps*8),
                                    nn.LeakyReLU(0.2,inplace=True),
                                    nn.Dropout(0.5))
-        self.conv5 = nn.Sequential(spectral_norm(nn.Conv2d(n_feature_maps*8,n_feature_maps*16,4,2,1,bias=False)),
+        self.conv5 = nn.Sequential(nn.Conv2d(n_feature_maps*8,n_feature_maps*16,4,2,1,bias=False),
                                    nn.BatchNorm2d(n_feature_maps*16),
                                    nn.LeakyReLU(0.2,inplace=True),
                                    nn.Dropout(0.8))
-        self.conv6 = nn.Sequential(spectral_norm(nn.Conv2d(n_feature_maps*16,n_feature_maps*16,4,1,0,bias=False)),
+        self.conv6 = nn.Sequential(nn.Conv2d(n_feature_maps*16,n_feature_maps*16,4,1,0,bias=False),
                                    nn.BatchNorm2d(n_feature_maps*16),
                                    nn.LeakyReLU(0.2,inplace=True),
                                    nn.Dropout(0.8))
@@ -43,8 +43,8 @@ class Discriminator(torch.nn.Module):
                                   self.conv5,
                                   self.conv6)
         self.flatten = nn.Flatten() 
-        self.linear_realfake = spectral_norm(nn.Linear(4096,1))
-        self.linear_class = spectral_norm(nn.Linear(4096,1050))
+        self.linear_realfake = nn.Linear(4096,1)
+        self.linear_class = nn.Linear(4096,1050)
         self.sigmoid = nn.Sigmoid()
         self.softmax = nn.Softmax() 
     def forward(self, x):
@@ -87,24 +87,24 @@ class Tpose(nn.Module):
         return self.main(x)
         
 class Generator(nn.Module):
-    def __init__(self, n_feature_maps=1024,noise_size=100,n_classes=1050,embedding_size=200):
+    def __init__(self, n_feature_maps=2048,noise_size=100,n_classes=1050,embedding_size=200):
         super(Generator, self).__init__()
         self.embed = nn.Embedding(n_classes,embedding_size)
         
         self.main = nn.Sequential(
             # input is Z, going into a convolution
             
-            Tpose(noise_size+embedding_size,n_feature_maps),
-            Tpose(n_feature_maps),
-            Tpose(n_feature_maps:=n_feature_maps//2),
-            Tpose(n_feature_maps:=n_feature_maps//2),
-            Tpose(n_feature_maps:=n_feature_maps//2),
-            
-            #ResizeConvLayer(noise_size+embedding_size,n_feature_maps),
-            #ResizeConvLayer(n_feature_maps),
+            #Tpose(noise_size+embedding_size,n_feature_maps),
+            #Tpose(n_feature_maps),
             #Tpose(n_feature_maps:=n_feature_maps//2),
-            #ResizeConvLayer(n_feature_maps:=n_feature_maps//2),
-            #ResizeConvLayer(n_feature_maps:=n_feature_maps//2),
+            #Tpose(n_feature_maps:=n_feature_maps//2),
+            #Tpose(n_feature_maps:=n_feature_maps//2),
+            
+            ResizeConvLayer(noise_size+embedding_size,n_feature_maps),
+            ResizeConvLayer(n_feature_maps),
+            Tpose(n_feature_maps:=n_feature_maps//2),
+            ResizeConvLayer(n_feature_maps:=n_feature_maps//2),
+            ResizeConvLayer(n_feature_maps:=n_feature_maps//2),
             
             nn.ConvTranspose2d( n_feature_maps//2, 3, 4,2, 1, bias=False),
             nn.Tanh()
@@ -112,10 +112,6 @@ class Generator(nn.Module):
 
     def forward(self, latent_noise,class_label):
         class_embedding = self.embed(class_label)
-        #print(class_embedding.shape)
-        class_embedding = class_embedding/torch.norm(class_embedding,dim=1,keepdim=True)
-        
-        #print(torch.norm(class_embedding[0]))
         class_embedding = class_embedding.unsqueeze(-1).unsqueeze(-1)
         concatenated_input = torch.cat((latent_noise,class_embedding),dim=1)
         out = self.main(concatenated_input)

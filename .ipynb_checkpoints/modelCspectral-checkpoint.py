@@ -87,7 +87,7 @@ class Tpose(nn.Module):
         return self.main(x)
         
 class Generator(nn.Module):
-    def __init__(self, n_feature_maps=1024,noise_size=100,n_classes=1050,embedding_size=1000):
+    def __init__(self, n_feature_maps=1024,noise_size=100,n_classes=1050,embedding_size=200):
         super(Generator, self).__init__()
         self.embed = nn.Embedding(n_classes,embedding_size)
         
