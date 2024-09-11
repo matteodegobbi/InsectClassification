@@ -9,76 +9,59 @@ import dataset_utils
 import random
 
 def extract_image_features(model : nn.Module, device :str ,save_to_disk : bool = False, save_name_prefix : str = ""):
-    (dataloaders,
-     dataset_sizes,
-     described_species_labels,
-     n_classes) = dataset_utils.get_dataset(image_path='image_dataset/',
-                                            csv_path='final_dataset.csv',
-                                            batch_size=16,
-                                            shuffle_loaders=False)
+    
+    all_images = torch.load('tensor_dataset/all_images.pt')
+    all_dnas = torch.load('tensor_dataset/all_dnas.pt')
+    all_labels = torch.load('tensor_dataset/all_labels.pt')
+    train_loc = torch.load('tensor_dataset/train_loc.pt')
+    val_seen_loc = torch.load('tensor_dataset/val_seen_loc.pt')
+    val_unseen_loc = torch.load('tensor_dataset/val_unseen_loc.pt')
+    test_seen_loc = torch.load('tensor_dataset/test_seen_loc.pt')
+    test_unseen_loc = torch.load('tensor_dataset/test_unseen_loc.pt')
+    species2genus = torch.load('tensor_dataset/species2genus.pt')
+    described_labels_train = torch.load('tensor_dataset/described_species_labels_train.pt')
+    described_labels_trainval= torch.load('tensor_dataset/described_species_labels_trainval.pt')
+        
+    class ImageDataset(Dataset):
+            def __init__(self, imgs, targets):
+                self.data = imgs
+                self.targets = targets           
+            def __getitem__(self, index):
+                x = self.data[index]
+                y = self.targets[index]
+                return x, y
+            
+            def __len__(self):
+                return len(self.data)
+    dataset = ImageDataset(all_images,all_labels)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=64,shuffle=False, num_workers=2)
 
     ###ACTUAL EXTRACTION OF THE FEATURES###
     torch.cuda.empty_cache()
     model.eval()
-    train_features = []
-    train_labels = np.array([]) 
+    features = []
+    labels = np.array([]) 
     with torch.no_grad():
-        for batch, targets in dataloaders['train']:
+        for batch, targets in dataloader:
             disc_dict = model.extract_features(batch.to(device),targets.to(device)) 
             features_torch = disc_dict['feature']
             features_targets_torch = targets
-            train_labels = np.concatenate((train_labels, features_targets_torch.cpu().numpy()))
-            train_features.append(features_torch.cpu().numpy())
+            labels = np.concatenate((labels, features_targets_torch.cpu().numpy()))
+            features.append(features_torch.cpu().numpy())
             torch.cuda.empty_cache()
 
-    train_features = np.concatenate(train_features)
-
+    features = np.concatenate(features)
+    train_features = features[train_loc]
+    train_labels = labels[train_loc]
+    
+    val_features = features[torch.cat((val_seen_loc,val_unseen_loc))]
+    val_labels = labels[torch.cat((val_seen_loc,val_unseen_loc))]
+    test_features = features[torch.cat((test_seen_loc,test_unseen_loc))]
+    test_labels = labels[torch.cat((test_seen_loc,test_unseen_loc))]
     if save_to_disk:
         torch.save(torch.tensor(train_features),save_name_prefix+'img_train_features.pt')
         torch.save(torch.tensor(train_labels),save_name_prefix+'img_train_labels.pt')
     torch.cuda.empty_cache()
-
-
-    model.eval()
-    val_features = []
-    val_labels = np.array([])
-    with torch.no_grad():
-        for batch,targets in dataloaders['val']:
-            disc_dict = model.extract_features(batch.to(device),targets.to(device)) 
-            features_torch = disc_dict['feature']
-            features_targets_torch = targets
-            val_labels = np.concatenate((val_labels, features_targets_torch.cpu().numpy()))
-            val_features.append(features_torch.cpu().numpy())
-            torch.cuda.empty_cache()
-
-    val_features = np.concatenate(val_features)
-
-
-    if save_to_disk:
-        torch.save(torch.tensor(val_features),save_name_prefix+'img_val_features.pt')
-        torch.save(torch.tensor(val_labels),save_name_prefix+'img_val_labels.pt')
-    torch.cuda.empty_cache()
-
-
-    model.eval()
-    test_features = []
-    test_labels = np.array([])
-    with torch.no_grad():
-        for batch,targets in dataloaders['test']:
-            disc_dict = model.extract_features(batch.to(device),targets.to(device)) 
-            features_torch = disc_dict['feature']
-            features_targets_torch = targets
-            test_labels = np.concatenate((test_labels, features_targets_torch.cpu().numpy()))
-            test_features.append(features_torch.cpu().numpy())
-            torch.cuda.empty_cache()
-
-    test_features = np.concatenate(test_features)
-
-
-    if save_to_disk:
-        torch.save(torch.tensor(test_features),save_name_prefix+'img_test_features.pt')
-        torch.save(torch.tensor(test_labels),save_name_prefix+'img_test_labels.pt')
-
     return (train_features,train_labels),(val_features,val_labels), (test_features,test_labels)
 
 
