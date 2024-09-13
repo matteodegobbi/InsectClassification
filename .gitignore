@@ -14,3 +14,4 @@ pretrain_dataset/
 samples/
 matlab_dataset/
 tensor_dataset/
+*.mat
