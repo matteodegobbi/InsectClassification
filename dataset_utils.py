@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd 
 from typing import List
+from typing import Tuple 
 from sklearn.model_selection import train_test_split
 import random 
 import torch
@@ -71,33 +72,47 @@ def data_split(df, test_ratio,drop_labels = False, random_state = 42):
     X_test = pd.concat([X_test,X_undescribed])
     return X_train, X_test, y_train, y_test
 
-def image_filenames_from_df(df: pd.core.frame.DataFrame) -> List[str]:
+def image_filenames_from_df(df: pd.core.frame.DataFrame) -> Tuple[List[str],List[str]]:
     filenames : List[str] = []
+    boldids : List[str] = []
+
     for i,row in df.iterrows():
         urls = row['image_urls']
+        boldid = row['processid']
         for url in urls.split('|'):
             species_name = row['species_name'].replace(' ','_')
             image_filename = 'image_dataset/'+species_name+'/'+url[url.rfind('/')+1:]
             filenames.append(image_filename)
-    return filenames
+            boldids.append(boldid)
+    return filenames,boldids
 
 def image_splits_from_df(X_train, X_validation,X_test,image_dataset):
-    train_filenames : List[str] = image_filenames_from_df(X_train)
-    val_filenames : List[str] = image_filenames_from_df(X_validation)
-    test_filenames : List[str] = image_filenames_from_df(X_test)
+    (train_filenames ,train_bolds) = image_filenames_from_df(X_train)
+    (val_filenames ,val_bolds) = image_filenames_from_df(X_validation)
+    (test_filenames ,test_bolds) = image_filenames_from_df(X_test)
     train_indices : List[int] = []
     val_indices : List[int] = []
     test_indices : List[int] = []
+    boldids : List[str] = []
+    assert len(train_filenames) == len(train_bolds)
+    assert len(val_filenames) == len(val_bolds)
+    assert len(test_filenames) == len(test_bolds)
     for i, (filename,label) in enumerate(image_dataset.imgs):
         if filename in train_filenames:
             train_indices.append(i)
+            filename_index = train_filenames.index(filename)
+            boldids.append(train_bolds[filename_index])
         elif filename in val_filenames:
             val_indices.append(i)
+            filename_index = val_filenames.index(filename)
+            boldids.append(val_bolds[filename_index])
         elif filename in test_filenames:
             test_indices.append(i)
+            filename_index = test_filenames.index(filename)
+            boldids.append(test_bolds[filename_index])
         else:
             raise Exception(f"Exception: Filename {filename} isn't in any of the splits")
-    return train_indices,val_indices,test_indices
+    return train_indices,val_indices,test_indices,boldids
 
 def get_dataset(image_path:str, csv_path:str,batch_size:int, shuffle_loaders:bool = False):
     df = pd.read_csv(csv_path,index_col=0)
