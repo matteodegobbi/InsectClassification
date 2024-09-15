@@ -62,7 +62,7 @@ def extract_image_features(model : nn.Module, device :str ,save_to_disk : bool =
         torch.save(torch.tensor(train_features),save_name_prefix+'img_train_features.pt')
         torch.save(torch.tensor(train_labels),save_name_prefix+'img_train_labels.pt')
     torch.cuda.empty_cache()
-    return (train_features,train_labels),(val_features,val_labels), (test_features,test_labels)
+    return features,(train_features,train_labels),(val_features,val_labels), (test_features,test_labels)
 
 
 
@@ -126,4 +126,6 @@ def extract_expanded_dna_features(model : nn.Module,device :str ,save_to_disk : 
             torch.save(torch.tensor(expanded_test_dna_features),save_name_prefix+'dna_test_features.pt')
             torch.save(torch.tensor(expanded_test_dna_labels),save_name_prefix+'dna_test_labels.pt')
         
-    return (expanded_train_dna_features,expanded_train_dna_labels),(expanded_val_dna_features,expanded_val_dna_labels), (expanded_test_dna_features,expanded_test_dna_labels)
+    return features,(expanded_train_dna_features,expanded_train_dna_labels),(expanded_val_dna_features,expanded_val_dna_labels), (expanded_test_dna_features,expanded_test_dna_labels)
+
+
