@@ -1,22 +1,20 @@
 # InsectClassification
 
-## Link da leggere 
-- https://pytorch.org/tutorials/beginner/dcgan_faces_tutorial.html
-- https://towardsdatascience.com/https-medium-com-noa-weiss-the-hitchhikers-guide-to-hierarchical-classification-f8428ea1e076
-### DNA
-- https://machinelearningmastery.com/why-one-hot-encode-data-in-machine-learning/
-- https://elferachid.medium.com/one-hot-encoding-dna-92a1c29ba15a
-### Altre robe da guardare dopo 
-Importante, feature learning nelle GAN, primo paper
-- https://arxiv.org/abs/1511.06434
-Come cambiare l'architettura della GAN per input diversi
-- https://github.com/pytorch/examples/issues/70
-Robe varie sulle GAN, nel link di anime c'e' anche con le label
-- https://github.com/nashory/gans-awesome-applications
-## API
-https://v3.boldsystems.org/index.php/resources/api?type=webservices
+## Main Files: 
+* DnaModel.ipynb to train the CNN and extract features from DNA nucleotides
+* PreTrainReACGAN.ipynb to pretrain the ReACGAN
+* ReACGAN_immagini.ipynb to train the ReACGAN
+* FinalClassification.ipynb for getting the final classification by combining DNA and image Features, training the InsectNet and using the top2 method to choose if a species is described or undescribed
+* resnet.mlx to extract image features as the original paper
+* dna_matlab.mlx to extract dna features as the original paper
 
 ---
-## Citations
-- https://jovian.ml/shubham7169007/cat-dcgan
-- Dataset used: S Badirli, CJ Picard, G Mohler, Z Akata, M Dundar (2021). Data from Classifying the Unknown: Insect Identification by Deep Zero-shot Bayesian Learning. https://doi.org/10.7912/D2/27
+
+Utils files:
+* ReACGAN.py implementation of the ReACGAN, most of this code is taken from https://github.com/POSTECH-CVLab/PyTorch-StudioGAN
+* extract_features.py to extract the features from the trained GAN and trained CNN 
+* dataset_utils.py used to build the .mat dataset from the raw csv and image folder
+
+---
+
+Some models we tried but didn't end up using are found in the directory not_used

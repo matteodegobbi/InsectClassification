@@ -2,6 +2,7 @@
 
 * all_images: vector containing the 32424 64x64x3 images (RGB) pre normalized of the insects
 * all_dnas: vector containing the 32424 DNA barcodes in one-hot encoding 658x5
+* all_string_dnas: vector containing the 32424 DNA barcodes in string format
 * all_labels: vector containing the species label for the corresponding DNA and image
 * all_boldids: vector of strings containing the id from boldsystemsv3 (https://v3.boldsystems.org/) they can be used to download from boldsystems the original DNA barcodes and the full size images and other data related to the sample
 * train_loc: indices of the training samples in all_dnas, all_images, all_labels, all_boldids
