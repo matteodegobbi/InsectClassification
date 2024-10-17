@@ -19,3 +19,5 @@ get_unseen_fresh_samples/csvs_a_pezzi_unix/
 get_unseen_fresh_samples/new_csvs_a_pezzi/
 get_unseen_fresh_samples/image_dataset/
 get_unseen_fresh_samples/df_unknown_species.csv
+generic_pipeline/image_dataset/
+generic_pipeline/raw_data.csv

@@ -4,11 +4,6 @@ import os.path
 df = pd.read_csv('unknown_species_new_samples.csv')
 
 df = df.dropna(subset=['image_urls'])
-#print(df['image_urls'])
-for i,row in df.iterrows():
-    #print(type(row['image_urls']))
-    if isinstance(row['image_urls'],float):
-        print(i)
     
 urls = {}
 print(df.shape)

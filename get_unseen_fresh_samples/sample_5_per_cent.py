@@ -9,4 +9,3 @@ n_samples = 1000
 sampled_df = df.groupby('genus_name').apply(lambda x: x.sample(frac=n_samples/len(x) if len(x) > n_samples else 1.0)).reset_index(drop=True)
 
 sampled_df.to_csv('unknown_species_new_samples.csv', index=False)
-
