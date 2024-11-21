@@ -218,10 +218,10 @@ class Discriminator(nn.Module):
             adv_output = torch.squeeze(self.linear1(h))
     
             embed = self.linear2(h)
-            proxy = self.embedding(label)
-            if self.normalize_d_embed:
-                embed = F.normalize(embed, dim=1)#NORMALIZE FEATURE EMBEDDING TO PREVENT EARLY COLLAPSE
-                proxy = F.normalize(proxy, dim=1)
+            #proxy = self.embedding(label)
+            #if self.normalize_d_embed:
+            #    embed = F.normalize(embed, dim=1)#NORMALIZE FEATURE EMBEDDING TO PREVENT EARLY COLLAPSE
+            #    proxy = F.normalize(proxy, dim=1)
         return {
             "h": h,
             "adv_output": adv_output,
