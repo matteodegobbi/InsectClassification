@@ -1,0 +1,55 @@
+\documentclass[crop, tikz]{standalone}
+\usepackage{tikz}
+
+\usetikzlibrary{matrix, positioning}
+
+\begin{document}
+\begin{tikzpicture}
+
+	\matrix (mtr) [matrix of nodes,row sep=-\pgflinewidth, nodes={draw}]
+	{
+		 1 & |[fill=red!30]| 0 & 0 & 0 & 0\\
+		 0 & |[fill=red!30]| 1 & 0 & 0 & 0\\
+		 0 & |[fill=red!30]| 0 & 0 & 1 & 0\\
+		0 & |[fill=red!30]| 1 & 0 & 0 & 0\\
+		 0 & |[fill=red!30]| 1 & 0 &0 & 0\\
+		1 & 0 & 0 & 0 & 0\\
+	     0 & 0 & 0 & 1 & 0\\
+	};
+
+	\draw[very thick, red] (mtr-1-2.north west) rectangle (mtr-5-2.south east);
+
+	\node [below= of mtr-5-3.south] (lm) {$\bf I$};
+
+	\node[right = 0.2em of mtr] (str) {$*$};
+
+	\matrix (K) [right=0.2em of str,matrix of nodes,row sep=-\pgflinewidth, nodes={draw, fill=green!10}]
+	{
+		1  \\
+		0  \\
+		1  \\
+		3  \\
+		1  \\
+	};
+
+	\node [below = of K-4-1.south] (lk) {$\bf K$};
+
+
+
+
+
+	\draw[densely dotted, green, thick] (mtr-1-2.north west) -- (K-1-1.north west);
+	\draw[densely dotted, green, thick] (mtr-5-2.south west) -- (K-5-1.south west);
+	\draw[densely dotted, green, thick] (mtr-1-2.north east) -- (K-1-1.north east);
+	\draw[densely dotted, green, thick] (mtr-5-2.south east) -- (K-5-1.south east);
+
+
+
+
+
+	\draw[very thick, green] (K-1-1.north west) rectangle (K-5-1.south east);
+
+
+
+\end{tikzpicture}
+\end{document}
