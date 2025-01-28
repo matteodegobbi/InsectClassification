@@ -213,7 +213,7 @@ class Discriminator(nn.Module):
             h = self.activation(h)
             h = torch.sum(h, dim=[2, 3])
             feature = torch.flatten(h,start_dim=1)
-    
+            '''
             # adversarial training
             adv_output = torch.squeeze(self.linear1(h))
     
@@ -221,14 +221,14 @@ class Discriminator(nn.Module):
             proxy = self.embedding(label)
             if self.normalize_d_embed:
                 embed = F.normalize(embed, dim=1)#NORMALIZE FEATURE EMBEDDING TO PREVENT EARLY COLLAPSE
-                proxy = F.normalize(proxy, dim=1)
+                proxy = F.normalize(proxy, dim=1)'''
         return {
-            "h": h,
-            "adv_output": adv_output,
-            "embed": embed,
-            "proxy": proxy,
-            "cls_output": cls_output,
-            "label": label,
+            #"h": h,
+            #"adv_output": adv_output,
+            #"embed": embed,
+            #"proxy": proxy,
+            #"cls_output": cls_output,
+            #"label": label,
             "feature":feature
         }
 
