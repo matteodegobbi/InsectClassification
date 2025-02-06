@@ -6,6 +6,9 @@ import random
 import dataset_utils
 from torch.utils.data import Dataset, DataLoader
 import scipy.io as io
+import extract_features_script
+from tqdm.notebook import tqdm
+from DnaModel import TinyModel
 
 def main():
     parser = argparse.ArgumentParser(description="Train or extract features from DNA")
@@ -17,7 +20,7 @@ def main():
     parser.add_argument("-b","--batch", type=int, default=32, help="Batch size (default: 32)")
     parser.add_argument("--train-on-val", action="store_true", help="Add this argument if you want to train on both training and validation set")
     parser.add_argument("--dataset-path", type=str, default="matlab_dataset/insect_dataset.mat", help="Path to the dataset for training")
-    parser.add_argument("--save-weights-path", type=str, default="checkpoints/DnaCNNWeights.pt", help="Path to where to save the weights of the model after training")
+    parser.add_argument("--save-weights-path", type=str, default="checkpoints/DnaCNNWeights.pt", help="Path to where to save the weights of the model after traininggt")
     parser.add_argument("--read-weights-path", type=str, default="checkpoints/DnaCNNWeights.pt", help="Path to where to read the weights of the model to extract features")
 
     # Parse arguments
@@ -94,10 +97,9 @@ def train_execution(args):
         print("Training on both train and val set")
     print(f"Training for {args.epochs} epochs")
         
-    from tqdm.notebook import tqdm
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     def fit(epochs,dataloaders,optimizer,model,start_idx=0):
         criterion = torch.nn.CrossEntropyLoss()
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         torch.cuda.empty_cache()
         
         train_losses = []
@@ -156,7 +158,6 @@ def train_execution(args):
         return train_losses
     
     
-    from DnaModel import TinyModel
     tinymodel = TinyModel()
     tinymodel.to(device)
      
@@ -175,7 +176,6 @@ def train_execution(args):
     
 
 def feature_execution(args):
-    from DnaModel import TinyModel
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     tinymodel = TinyModel()
     optimizer = torch.optim.Adam(tinymodel.parameters(),weight_decay=1e-5)
@@ -183,16 +183,11 @@ def feature_execution(args):
     state_dict = torch.load(args.read_weights_path)
     tinymodel.load_state_dict(state_dict['model_state_dict'])
     optimizer.load_state_dict(state_dict['optimizer_state_dict'])
-    import importlib 
-    import extract_features
-    importlib.reload(extract_features)
     (all_dna_features,(expanded_train_dna_features,expanded_train_dna_labels),
      (expanded_val_dna_features,expanded_val_dna_labels), 
      (expanded_test_dna_features,expanded_test_dna_labels)) = \
-    extract_features.extract_expanded_dna_features(tinymodel,device,
-                                                   save_to_disk=False)
+    extract_features_script.extract_expanded_dna_features(tinymodel,device,args)
     
-    import scipy.io as io
     features_dataset = dict()
     features_dataset['all_dna_features_cnn_new'] = all_dna_features 
     io.savemat('all_dna_features_cnn_new.mat',features_dataset)
