@@ -50,6 +50,7 @@ def train_execution(args):
     test_unseen_loc = torch.tensor(matlab_dataset['test_unseen_loc']).squeeze()-1
     species2genus = torch.tensor(matlab_dataset['species2genus'])-1
     
+    
     dna_train = torch.clone(all_dnas[train_loc].data)
     dna_val = torch.clone(torch.cat((all_dnas[val_seen_loc],all_dnas[val_unseen_loc])).data)
     dna_test = torch.clone(torch.cat((all_dnas[test_seen_loc],all_dnas[test_unseen_loc])).data)

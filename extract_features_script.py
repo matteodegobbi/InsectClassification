@@ -10,6 +10,65 @@ import random
 import scipy.io as io
 
 
+def extract_image_features(model : nn.Module, device :str,args):
+    class ImageDataset(Dataset):
+            def __init__(self, imgs, targets):
+                self.data = imgs
+                self.targets = targets           
+            def __getitem__(self, index):
+                x = self.data[index]
+                y = self.targets[index]
+                return x, y
+            
+            def __len__(self):
+                return len(self.data)
+    
+    
+    # Read dataset
+    matlab_dataset = io.loadmat(args.dataset_path)
+    
+    all_images = torch.tensor(matlab_dataset['all_images'])
+    all_dnas = torch.tensor(matlab_dataset['all_dnas'])
+    all_labels = torch.tensor(matlab_dataset['all_labels']).squeeze()-1
+    train_loc = torch.tensor(matlab_dataset['train_loc']).squeeze()-1
+    val_seen_loc = torch.tensor(matlab_dataset['val_seen_loc']).squeeze()-1
+    val_unseen_loc = torch.tensor(matlab_dataset['val_unseen_loc']).squeeze()-1
+    test_seen_loc = torch.tensor(matlab_dataset['test_seen_loc']).squeeze()-1
+    test_unseen_loc = torch.tensor(matlab_dataset['test_unseen_loc']).squeeze()-1
+    species2genus = torch.tensor(matlab_dataset['species2genus'])-1
+    
+    described_labels_train = matlab_dataset['described_species_labels_train'].squeeze()-1
+    described_labels_trainval = matlab_dataset['described_species_labels_trainval'].squeeze()-1
+    
+    dataset = ImageDataset(all_images,all_labels)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=64,shuffle=False, num_workers=2)
+
+    ###ACTUAL EXTRACTION OF THE FEATURES###
+    torch.cuda.empty_cache()
+    model.eval()
+    features = []
+    labels = np.array([]) 
+    with torch.no_grad():
+        for batch, targets in dataloader:
+            disc_dict = model.extract_features(batch.to(device),targets.to(device)) 
+            features_torch = disc_dict['feature']
+            features_targets_torch = targets
+            labels = np.concatenate((labels, features_targets_torch.cpu().numpy()))
+            features.append(features_torch.cpu().numpy())
+            torch.cuda.empty_cache()
+
+    features = np.concatenate(features)
+    train_features = features[train_loc]
+    train_labels = labels[train_loc]
+    
+    val_features = features[torch.cat((val_seen_loc,val_unseen_loc))]
+    val_labels = labels[torch.cat((val_seen_loc,val_unseen_loc))]
+    test_features = features[torch.cat((test_seen_loc,test_unseen_loc))]
+    test_labels = labels[torch.cat((test_seen_loc,test_unseen_loc))]
+    torch.cuda.empty_cache()
+    return features,(train_features,train_labels),(val_features,val_labels), (test_features,test_labels)
+
+
 def extract_expanded_dna_features(model : nn.Module,device :str,args):
    
     class DNAdataset(Dataset):
