@@ -1,6 +1,5 @@
 import torch
 from torch import nn 
-from torch.utils.tensorboard import SummaryWriter
 import numpy as np
 
 import os
@@ -348,7 +347,7 @@ class Generator(nn.Module):
 #####################
 #####################
 
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 
 def train_discriminator(real_images,real_classes , discriminator_optimizer,discriminator,generator,batch_size,latent_size,described_species,device,n_classes):
     # Clear discriminator gradients

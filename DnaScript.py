@@ -7,7 +7,7 @@ import dataset_utils
 from torch.utils.data import Dataset, DataLoader
 import scipy.io as io
 import extract_features_script
-from tqdm.notebook import tqdm
+#from tqdm import tqdm
 from DnaModel import TinyModel
 
 def main():
@@ -99,17 +99,21 @@ def train_execution(args):
     print(f"Training for {args.epochs} epochs")
         
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print(f"device:{device}",flush=True)
     def fit(epochs,dataloaders,optimizer,model,start_idx=0):
+        print("Starting",flush=True)
         criterion = torch.nn.CrossEntropyLoss()
-        torch.cuda.empty_cache()
+        if device != "cpu":
+            torch.cuda.empty_cache()
         
         train_losses = []
         train_scores = []
         val_losses = []
         val_scores = []
         for epoch in range(epochs):
+            print(f"epoch{epoch}",flush=True)
             running_train_corrects = 0
-            for dnas,labels in tqdm(dataloaders['train']):
+            for dnas,labels in (dataloaders['train']):
                 model.train()
                 dnas = dnas.to(device)
                 labels = labels.to(device)
@@ -127,7 +131,7 @@ def train_execution(args):
             train_losses.append(train_loss)
             
             running_val_corrects = 0
-            for dnas,labels in tqdm(dataloaders['val']):
+            for dnas,labels in (dataloaders['val']):
                 
                 model.eval()
                 with torch.no_grad():
@@ -177,18 +181,24 @@ def train_execution(args):
     
 
 def feature_execution(args):
+    print("Starting",flush=True)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print(f"device:{device}",flush=True)
+    
     tinymodel = TinyModel()
     optimizer = torch.optim.Adam(tinymodel.parameters(),weight_decay=1e-5)
     tinymodel.to(device)
-    state_dict = torch.load(args.read_weights_path)
+    state_dict = torch.load(args.read_weights_path,map_location=device)
     tinymodel.load_state_dict(state_dict['model_state_dict'])
     optimizer.load_state_dict(state_dict['optimizer_state_dict'])
+
+    print("Loaded model",flush=True)
     (all_dna_features,(expanded_train_dna_features,expanded_train_dna_labels),
      (expanded_val_dna_features,expanded_val_dna_labels), 
      (expanded_test_dna_features,expanded_test_dna_labels)) = \
     extract_features_script.extract_expanded_dna_features(tinymodel,device,args)
     
+    print("extracted_features",flush=True)
     features_dataset = dict()
     features_dataset['all_dna_features_cnn_new'] = all_dna_features 
     io.savemat('all_dna_features_cnn_new.mat',features_dataset)

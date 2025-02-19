@@ -21,3 +21,4 @@ get_unseen_fresh_samples/image_dataset/
 get_unseen_fresh_samples/df_unknown_species.csv
 generic_pipeline/image_dataset/
 generic_pipeline/raw_data.csv
+venv/

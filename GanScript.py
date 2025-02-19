@@ -7,11 +7,12 @@ import dataset_utils
 from torch.utils.data import Dataset, DataLoader
 import scipy.io as io
 import extract_features_script
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 import modelReACGAN as m
 from utils import ops
 import torch.nn.functional as F
 import GanModelBuilder
+import torchvision
 
 
 def main():
@@ -119,8 +120,6 @@ def train_execution(args):
     
     print(f"Training for {args.epochs} epochs")
     fixed_latent = torch.randn(100,100).to(device)
-    import torchvision
-    from tqdm.notebook import tqdm
     discriminator.train()
     generator.train()
     for epoch in range(args.epochs):

@@ -44,7 +44,8 @@ def extract_image_features(model : nn.Module, device :str,args):
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=64,shuffle=False, num_workers=2)
 
     ###ACTUAL EXTRACTION OF THE FEATURES###
-    torch.cuda.empty_cache()
+    if device!="cpu":
+        torch.cuda.empty_cache()
     model.eval()
     features = []
     labels = np.array([]) 
@@ -55,7 +56,8 @@ def extract_image_features(model : nn.Module, device :str,args):
             features_targets_torch = targets
             labels = np.concatenate((labels, features_targets_torch.cpu().numpy()))
             features.append(features_torch.cpu().numpy())
-            torch.cuda.empty_cache()
+            if device!="cpu":
+                torch.cuda.empty_cache()
 
     features = np.concatenate(features)
     train_features = features[train_loc]
@@ -65,7 +67,9 @@ def extract_image_features(model : nn.Module, device :str,args):
     val_labels = labels[torch.cat((val_seen_loc,val_unseen_loc))]
     test_features = features[torch.cat((test_seen_loc,test_unseen_loc))]
     test_labels = labels[torch.cat((test_seen_loc,test_unseen_loc))]
-    torch.cuda.empty_cache()
+    if device!="cpu":
+        torch.cuda.empty_cache()
+
     return features,(train_features,train_labels),(val_features,val_labels), (test_features,test_labels)
 
 
@@ -111,7 +115,8 @@ def extract_expanded_dna_features(model : nn.Module,device :str,args):
             fts = model.feature_extract(dnas)
             labels = np.concatenate((labels, batch_labels.cpu().numpy()))
             features.append(fts.cpu().numpy())
-            torch.cuda.empty_cache()
+            if device!="cpu":
+                torch.cuda.empty_cache()
         features = torch.tensor(np.concatenate(features))
         labels = torch.tensor(labels)
 
