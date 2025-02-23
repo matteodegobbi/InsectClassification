@@ -118,6 +118,7 @@ def train_execution(args):
     torch.cuda.empty_cache()
     
     
+    warmup_iters = 2
     print(f"Training for {args.epochs} epochs")
     fixed_latent = torch.randn(100,100).to(device)
     discriminator.train()
@@ -126,11 +127,25 @@ def train_execution(args):
         for real_images, real_classes in tqdm(dataloaders['train']):
             real_images = real_images.to(device)
             real_classes = real_classes.to(device)
+
+            # NOTE:
+            if epoch == warmup_iters: torch.cuda.cudart().cudaProfilerStart();
+
+            # NOTE:
+            if epoch >= warmup_iters: torch.cuda.nvtx.range_push("iteration{}".format(epoch))
             #TRAIN DISCRIMINATOR
             for k in range(2):
+
                 discriminator_optimizer.zero_grad()
                 #use discriminator on real images
+
+                # NOTE:
+                if epoch >= warmup_iters: torch.cuda.nvtx.range_push(f"forward{k}")
+
                 real_dict = discriminator(real_images,real_classes)
+
+                # NOTE:
+                if epoch >= warmup_iters: torch.cuda.nvtx.range_pop()
                 #use discriminator on fake images
                 with torch.no_grad():
                     random_classes = torch.tensor(described_species_labels[np.random.randint(0, len(described_species_labels), batch_size)],device=device)
@@ -140,8 +155,21 @@ def train_execution(args):
                 dis_acml_loss = GanModelBuilder.d_hinge(real_dict["adv_output"], fake_dict["adv_output"])
                 real_cond_loss = cond_loss(**real_dict)
                 dis_acml_loss += cond_lambda * real_cond_loss
+                # NOTE:
+                if epoch >= warmup_iters: torch.cuda.nvtx.range_push("backward")
                 dis_acml_loss.backward()
+                # NOTE:
+                if epoch >= warmup_iters: torch.cuda.nvtx.range_pop()
+
+                # NOTE:
+                if epoch >= warmup_iters: torch.cuda.nvtx.range_push("opt.step()")
                 discriminator_optimizer.step()
+                # NOTE:
+                if epoch >= warmup_iters: torch.cuda.nvtx.range_pop()
+
+                # pop iteration range
+                # NOTE:
+                if epoch >= warmup_iters: torch.cuda.nvtx.range_pop()
     
     
             
@@ -155,6 +183,7 @@ def train_execution(args):
             gen_acml_loss += cond_lambda * fake_cond_loss
             gen_acml_loss.backward()
             generator_optimizer.step()
+        torch.cuda.cudart().cudaProfilerStop()
         
         print(f"disc loss={dis_acml_loss.item()}",end=',')
         print(f"gen loss={gen_acml_loss.item()}")
