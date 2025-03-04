@@ -3,8 +3,8 @@ import torch
 from torch import nn 
 import numpy as np
 import random
-import dataset_utils
 from torch.utils.data import Dataset, DataLoader
+import dataset_utils
 import scipy.io as io
 import extract_features_script
 from tqdm import tqdm

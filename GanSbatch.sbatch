@@ -16,4 +16,4 @@
 module purge                          # Start with a clean environment
 module load intel mkl python
 source venv/bin/activate
-nsys profile -w true -t cuda,nvtx,osrt,cudnn,cublas   --capture-range=cudaProfilerApi -x true -o my_profile python GanScript.py -f -e 2           # Run the script using the loaded Python module
+nsys profile -w true -t cuda,nvtx,osrt,cudnn,cublas   --capture-range=cudaProfilerApi -x true -o my_profile python GanScript.py -t -e 3           # Run the script using the loaded Python module
