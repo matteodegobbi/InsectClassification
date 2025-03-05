@@ -13,7 +13,14 @@
 #xxxxx --constraint=highmem # only needed for CPU
 
 
+
 module purge                          # Start with a clean environment
 module load intel mkl python
 source venv/bin/activate
+export MASTER_ADDR=$(scontrol show hostnames $SLURM_JOB_NODELIST | head -n 1)
+export MASTER_PORT=29500
+export WORLD_SIZE=$SLURM_NPROCS
+export LOCAL_RANK=$SLURM_LOCALID
+#export LOCAL_WORLD_SIZE=$SLURM_GPUS_PER_NODE
+
 nsys profile -w true -t cuda,nvtx,osrt,cudnn,cublas   --capture-range=cudaProfilerApi -x true -o my_profile python GanScript.py -t -e 3           # Run the script using the loaded Python module

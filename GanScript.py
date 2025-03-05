@@ -13,6 +13,14 @@ from utils import ops
 import torch.nn.functional as F
 import GanModelBuilder
 import torchvision
+import os 
+
+from torch.nn.parallel import DistributedDataParallel
+import torch.distributed as dist
+
+local_rank = int(os.environ['LOCAL_RANK'])
+torch.cuda.set_device(local_rank)
+#model = DistributedDataParallel(model, device_ids=[local_rank])
 
 
 def main():
