@@ -124,51 +124,63 @@ def train_execution(args):
     discriminator.train()
     generator.train()
     for epoch in range(args.epochs):
-        for real_images, real_classes in tqdm(dataloaders['train']):
+        for real_images, real_classes in dataloaders['train']:
             real_images = real_images.to(device)
             real_classes = real_classes.to(device)
 
-            # NOTE:
+            # NOTE: starting profiler after warmup_iters
             if epoch == warmup_iters: torch.cuda.cudart().cudaProfilerStart();
 
-            # NOTE:
-            if epoch >= warmup_iters: torch.cuda.nvtx.range_push("iteration{}".format(epoch))
+            # NOTE: epoch start
+            if epoch >= warmup_iters: torch.cuda.nvtx.range_push(f"epoch{epoch}")
             #TRAIN DISCRIMINATOR
             for k in range(2):
 
                 discriminator_optimizer.zero_grad()
                 #use discriminator on real images
 
-                # NOTE:
-                if epoch >= warmup_iters: torch.cuda.nvtx.range_push(f"forward{k}")
+                # NOTE: disc iter start
+                if epoch >= warmup_iters: torch.cuda.nvtx.range_push(f"disc_iter{k}")
 
+                # NOTE: disc forward real start
+                if epoch >= warmup_iters: torch.cuda.nvtx.range_push(f"disc_forward_real")
                 real_dict = discriminator(real_images,real_classes)
-
-                # NOTE:
+                # NOTE: disc forward end
                 if epoch >= warmup_iters: torch.cuda.nvtx.range_pop()
+
                 #use discriminator on fake images
                 with torch.no_grad():
                     random_classes = torch.tensor(described_species_labels[np.random.randint(0, len(described_species_labels), batch_size)],device=device)
+                    # NOTE: gen forward start
+                    if epoch >= warmup_iters: torch.cuda.nvtx.range_push(f"gen_forward")
                     t = generator(torch.randn(batch_size,100).to(device),random_classes,eval = True)
+                    # NOTE: gen forward end
+                    if epoch >= warmup_iters: torch.cuda.nvtx.range_pop()
+
+
+                # NOTE: disc forward fake start
+                if epoch >= warmup_iters: torch.cuda.nvtx.range_push(f"disc_forward_fake")
                 fake_dict = discriminator(t,random_classes)
+
+                # NOTE: disc forward fake end
+                if epoch >= warmup_iters: torch.cuda.nvtx.range_pop()
                 #Compute the two losses
                 dis_acml_loss = GanModelBuilder.d_hinge(real_dict["adv_output"], fake_dict["adv_output"])
                 real_cond_loss = cond_loss(**real_dict)
                 dis_acml_loss += cond_lambda * real_cond_loss
-                # NOTE:
-                if epoch >= warmup_iters: torch.cuda.nvtx.range_push("backward")
+                # NOTE: disc backward start
+                if epoch >= warmup_iters: torch.cuda.nvtx.range_push("disc_backward")
                 dis_acml_loss.backward()
-                # NOTE:
+                # NOTE: disc backward end
                 if epoch >= warmup_iters: torch.cuda.nvtx.range_pop()
 
-                # NOTE:
-                if epoch >= warmup_iters: torch.cuda.nvtx.range_push("opt.step()")
+                # NOTE: disc opt start
+                if epoch >= warmup_iters: torch.cuda.nvtx.range_push("disc opt")
                 discriminator_optimizer.step()
-                # NOTE:
+                # NOTE: disc opt end
                 if epoch >= warmup_iters: torch.cuda.nvtx.range_pop()
 
-                # pop iteration range
-                # NOTE:
+                # NOTE: disc iter end
                 if epoch >= warmup_iters: torch.cuda.nvtx.range_pop()
     
     
@@ -176,15 +188,45 @@ def train_execution(args):
             #TRAIN GENERATOR
             generator_optimizer.zero_grad()
             random_classes = torch.tensor(described_species_labels[np.random.randint(0, len(described_species_labels), batch_size)],device=device)
+
+            # NOTE: gen start
+            if epoch >= warmup_iters: torch.cuda.nvtx.range_push(f"gen")
+
+            # NOTE: gen forward start
+            if epoch >= warmup_iters: torch.cuda.nvtx.range_push(f"gen_forward")
             t = generator(torch.randn(batch_size,100).to(device),random_classes,eval = True)
+            # NOTE: gen forward end 
+            if epoch >= warmup_iters: torch.cuda.nvtx.range_pop()
+
+
+            # NOTE: disc forward start
+            if epoch >= warmup_iters: torch.cuda.nvtx.range_push(f"disc_forward")
             fake_dict = discriminator(t,random_classes)
+            # NOTE: disc forward end 
+            if epoch >= warmup_iters: torch.cuda.nvtx.range_pop()
+
             gen_acml_loss = GanModelBuilder.g_hinge(fake_dict["adv_output"])
             fake_cond_loss = cond_loss(**fake_dict)
             gen_acml_loss += cond_lambda * fake_cond_loss
+
+            # NOTE: gen backward start
+            if epoch >= warmup_iters: torch.cuda.nvtx.range_push("gen_backward")
             gen_acml_loss.backward()
+            # NOTE: gen backward end 
+            if epoch >= warmup_iters: torch.cuda.nvtx.range_pop()
+
+            # NOTE: gen opt start
+            if epoch >= warmup_iters: torch.cuda.nvtx.range_push("gen opt")
             generator_optimizer.step()
-        torch.cuda.cudart().cudaProfilerStop()
+            # NOTE: gen opt end
+            if epoch >= warmup_iters: torch.cuda.nvtx.range_pop()
+
+            # NOTE: gen end
+            if epoch >= warmup_iters: torch.cuda.nvtx.range_pop()
         
+
+        # NOTE: epoch end
+        if epoch >= warmup_iters: torch.cuda.nvtx.range_pop()
         print(f"disc loss={dis_acml_loss.item()}",end=',')
         print(f"gen loss={gen_acml_loss.item()}")
         with torch.no_grad():
@@ -196,6 +238,7 @@ def train_execution(args):
             #loss_d, real_score, fake_score, class_accuracy_real, class_accuracy_fake
     
         
+    torch.cuda.cudart().cudaProfilerStop()
     print(f"Saving model weights at {args.save_weights_path}")
     torch.save({
                 'epoch':args.epochs,

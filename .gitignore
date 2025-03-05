@@ -23,3 +23,7 @@ generic_pipeline/image_dataset/
 generic_pipeline/raw_data.csv
 venv/
 *.nsys-rep
+*nsys*
+*.prv
+*.row
+*.pcf
