@@ -17,12 +17,20 @@ import os
 
 from torch.nn.parallel import DistributedDataParallel
 import torch.distributed as dist
+from torch.utils.data.distributed import DistributedSampler 
 
-local_rank = int(os.environ['LOCAL_RANK'])
-torch.cuda.set_device(local_rank)
 #model = DistributedDataParallel(model, device_ids=[local_rank])
 
+def is_distributed():
+    """Check if distributed training is configured via environment variables."""
+    return "RANK" in os.environ and "WORLD_SIZE" in os.environ
 
+if is_distributed():
+    dist.init_process_group(backend='nccl')
+    local_rank = int(os.environ['LOCAL_RANK'])
+    torch.cuda.set_device(local_rank)
+else:
+    print("not av")
 def main():
     parser = argparse.ArgumentParser(description="Train or extract features from DNA")
     
@@ -50,7 +58,7 @@ def main():
 
 def train_execution(args):
 
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    #device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     batch_size = args.batch
     # Read dataset
     matlab_dataset = io.loadmat(args.dataset_path)
@@ -95,10 +103,17 @@ def train_execution(args):
     
     n_classes = all_labels.max()+1
     
-    train_loader = torch.utils.data.DataLoader(train_d, batch_size=batch_size,shuffle=True, num_workers=2)
-    val_loader = torch.utils.data.DataLoader(val_d, batch_size=batch_size,shuffle=True, num_workers=2)
-    train_val_loader = torch.utils.data.DataLoader(train_val_d, batch_size=batch_size,shuffle=True, num_workers=2)
-    test_loader = torch.utils.data.DataLoader(test_d, batch_size=batch_size,shuffle=True, num_workers=2)
+    train_sampler = DistributedSampler(train_d)
+    val_sampler = DistributedSampler(val_d)
+    train_sampler = DistributedSampler(train_d)
+    train_val_sampler = DistributedSampler(train_val_d)
+    test_sampler = DistributedSampler(test_d)
+
+    # Arg shuffle=true is not used when using distributed samplers because it's already handled
+    train_loader = torch.utils.data.DataLoader(train_d, batch_size=batch_size,sampler=train_sampler, num_workers=8)
+    val_loader = torch.utils.data.DataLoader(val_d, batch_size=batch_size,sampler=val_sampler, num_workers=8)
+    train_val_loader = torch.utils.data.DataLoader(train_val_d, batch_size=batch_size,sampler=train_val_sampler, num_workers=8)
+    test_loader = torch.utils.data.DataLoader(test_d, batch_size=batch_size,sampler=test_sampler, num_workers=8)
     dataloaders = {"train":train_loader,"val":val_loader,"test":test_loader,'train_val':train_val_loader}
     dataset_sizes = {'train': len(train_d), 'val':len(val_d),'test':len(test_d),'train_val':len(train_val_d)}
     is_train_val = args.train_on_val
@@ -114,8 +129,15 @@ def train_execution(args):
 
     (discriminator,generator) = GanModelBuilder.model_builder() 
     
-    discriminator.to(device)
-    generator.to(device)
+    # Moves model to GPU before wrapping in DDP
+    device = torch.device(f"cuda:{local_rank}" if torch.cuda.is_available() else "cpu")
+    discriminator = discriminator.to(device)  # Move model to GPU
+    generator = generator.to(device)  # Move model to GPU
+
+    discriminator = DistributedDataParallel(discriminator, device_ids=[local_rank])
+    generator = DistributedDataParallel(generator, device_ids=[local_rank])
+    #discriminator.to(device)
+    #generator.to(device)
     discriminator_optimizer = torch.optim.Adam(discriminator.parameters(),lr=2e-4,betas=(0.0, 0.999))
     generator_optimizer = torch.optim.Adam(generator.parameters(),lr=2e-5,betas=(0.0, 0.999))
     
@@ -172,10 +194,16 @@ def train_execution(args):
 
                 # NOTE: disc forward fake end
                 if epoch >= warmup_iters: torch.cuda.nvtx.range_pop()
+
+                # NOTE: disc loss start
+                if epoch >= warmup_iters: torch.cuda.nvtx.range_push(f"disc_loss")
                 #Compute the two losses
                 dis_acml_loss = GanModelBuilder.d_hinge(real_dict["adv_output"], fake_dict["adv_output"])
                 real_cond_loss = cond_loss(**real_dict)
                 dis_acml_loss += cond_lambda * real_cond_loss
+                # NOTE: disc loss end
+                if epoch >= warmup_iters: torch.cuda.nvtx.range_pop()
+
                 # NOTE: disc backward start
                 if epoch >= warmup_iters: torch.cuda.nvtx.range_push("disc_backward")
                 dis_acml_loss.backward()
@@ -208,14 +236,18 @@ def train_execution(args):
 
 
             # NOTE: disc forward start
-            if epoch >= warmup_iters: torch.cuda.nvtx.range_push(f"disc_forward")
+            if epoch >= warmup_iters: torch.cuda.nvtx.range_push(f"disc_forward_fake")
             fake_dict = discriminator(t,random_classes)
             # NOTE: disc forward end 
             if epoch >= warmup_iters: torch.cuda.nvtx.range_pop()
 
+            # NOTE: gen loss start
+            if epoch >= warmup_iters: torch.cuda.nvtx.range_push(f"gen_loss")
             gen_acml_loss = GanModelBuilder.g_hinge(fake_dict["adv_output"])
             fake_cond_loss = cond_loss(**fake_dict)
             gen_acml_loss += cond_lambda * fake_cond_loss
+            # NOTE: gen loss end 
+            if epoch >= warmup_iters: torch.cuda.nvtx.range_pop()
 
             # NOTE: gen backward start
             if epoch >= warmup_iters: torch.cuda.nvtx.range_push("gen_backward")
@@ -247,6 +279,7 @@ def train_execution(args):
     
         
     torch.cuda.cudart().cudaProfilerStop()
+    dist.destroy_process_group()
     print(f"Saving model weights at {args.save_weights_path}")
     torch.save({
                 'epoch':args.epochs,
@@ -258,6 +291,7 @@ def train_execution(args):
                 'model_state_dict': discriminator.state_dict(),
                 'optimizer_state_dict': discriminator_optimizer.state_dict(),
                 }, args.save_weights_path+"_discriminator.pt")
+
     
 def feature_execution(args):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

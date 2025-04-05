@@ -1,0 +1,23 @@
+unload bsc/1.0 (PATH, MANPATH)
+Set INTEL compilers as MPI wrappers backend
+load mkl/2024.2 (LD_LIBRARY_PATH)
+load PYTHON/3.12.1 (PATH, MANPATH, LD_LIBRARY_PATH, LIBRARY_PATH,
+PKG_CONFIG_PATH, C_INCLUDE_PATH, CPLUS_INCLUDE_PATH, PYTHONHOME, PYTHONPATH) 
+Fatal Python error: Segmentation fault
+
+Current thread 0x00007f267bdaa740 (most recent call first):
+  File "/apps/ACC/PYTHON/3.12.1/INTEL/lib/python3.12/site-packages/torch/distributed/elastic/rendezvous/c10d_rendezvous_backend.py", line 113 in _call_store
+  File "/apps/ACC/PYTHON/3.12.1/INTEL/lib/python3.12/site-packages/torch/distributed/elastic/rendezvous/c10d_rendezvous_backend.py", line 64 in __init__
+  File "/apps/ACC/PYTHON/3.12.1/INTEL/lib/python3.12/site-packages/torch/distributed/elastic/rendezvous/c10d_rendezvous_backend.py", line 259 in create_backend
+  File "/apps/ACC/PYTHON/3.12.1/INTEL/lib/python3.12/site-packages/torch/distributed/elastic/rendezvous/registry.py", line 36 in _create_c10d_handler
+  File "/apps/ACC/PYTHON/3.12.1/INTEL/lib/python3.12/site-packages/torch/distributed/elastic/rendezvous/api.py", line 263 in create_handler
+  File "/apps/ACC/PYTHON/3.12.1/INTEL/lib/python3.12/site-packages/torch/distributed/elastic/rendezvous/registry.py", line 66 in get_rendezvous_handler
+  File "/apps/ACC/PYTHON/3.12.1/INTEL/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 235 in launch_agent
+  File "/apps/ACC/PYTHON/3.12.1/INTEL/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 132 in __call__
+  File "/apps/ACC/PYTHON/3.12.1/INTEL/lib/python3.12/site-packages/torch/distributed/run.py", line 870 in run
+  File "/apps/ACC/PYTHON/3.12.1/INTEL/lib/python3.12/site-packages/torch/distributed/run.py", line 879 in main
+  File "/apps/ACC/PYTHON/3.12.1/INTEL/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 347 in wrapper
+  File "/gpfs/home/nct/nct01098/InsectClassification/venv/bin/torchrun", line 8 in <module>
+
+Extension modules: numpy.core._multiarray_umath, numpy.core._multiarray_tests, numpy.linalg._umath_linalg, numpy.fft._pocketfft_internal, numpy.random._common, numpy.random.bit_generator, numpy.random._bounded_integers, numpy.random._mt19937, numpy.random.mtrand, numpy.random._philox, numpy.random._pcg64, numpy.random._sfc64, numpy.random._generator, torch._C, torch._C._fft, torch._C._linalg, torch._C._nested, torch._C._nn, torch._C._sparse, torch._C._special (total: 20)
+/scratch/slurm/job16476015/slurm_script: line 21: 3102893 Segmentation fault      torchrun --nnodes=1 --nproc_per_node=2 --standalone GanScript.py -t -e 3

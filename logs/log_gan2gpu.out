@@ -1,0 +1,26 @@
+unload bsc/1.0 (PATH, MANPATH)
+Set INTEL compilers as MPI wrappers backend
+load GCC/11.4.0 (PATH, LD_LIBRARY_PATH, LIBRARY_PATH, C_INCLUDE_PATH,
+CPLUS_INCLUDE_PATH, CC, FC, F90, F77, CXX, OMPI_FC, OMPI_F90, OMPI_F77,
+OMPI_CC, OMPI_CXX) 
+load mkl/2024.2 (LD_LIBRARY_PATH)
+load impi/2021.13 (PATH, MANPATH, LD_LIBRARY_PATH)
+load HDF5/1.14.1-2 (PATH, LD_LIBRARY_PATH, LIBRARY_PATH, C_INCLUDE_PATH,
+CPLUS_INCLUDE_PATH, HDF5_DIR, HDF5_ROOT) 
+load PYTHON/3.12.1 (PATH, MANPATH, LD_LIBRARY_PATH, LIBRARY_PATH,
+PKG_CONFIG_PATH, C_INCLUDE_PATH, CPLUS_INCLUDE_PATH, PYTHONHOME, PYTHONPATH) 
+Training for 3 epochs
+Training for 3 epochs
+/gpfs/home/nct/nct01098/InsectClassification/modelReACGAN.py:178: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast() if self.mixed_precision and not eval else dummy_context_mgr() as mp:
+/gpfs/home/nct/nct01098/InsectClassification/modelReACGAN.py:178: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast() if self.mixed_precision and not eval else dummy_context_mgr() as mp:
+disc loss=2.779296875,gen loss=5.2421875
+disc loss=2.849609375,gen loss=5.23046875
+disc loss=2.140625,gen loss=4.6796875
+disc loss=2.251953125,gen loss=5.03515625
+disc loss=1.9921875,gen loss=4.9453125
+disc loss=2.208984375,gen loss=5.30859375
+Saving model weights at checkpoints/ImageGANWeights
+Saving model weights at checkpoints/ImageGANWeights
+Job completed in 194 seconds.

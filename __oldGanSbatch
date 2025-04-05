@@ -1,0 +1,36 @@
+#!/bin/bash
+#
+# [prova.sbatch]
+#
+#SBATCH --job-name=dna_feature_extract        # Job name
+#SBATCH --output=log_gan.out            # Output file name 
+#SBATCH --export=ALL                  # Export all environment variables
+#SBATCH --time=00:30:00               # Set max runtime of job
+#SBATCH --account=nct_323 --qos=acc_training
+
+#SBATCH --nodes=2                 # All GPUs on one node
+#SBATCH --ntasks=8                 # 4 processes (one per GPU)
+#SBATCH --cpus-per-task=20 --partition=acc --gres=gpu:8
+#SBATCH --ntasks-per-node=4         # 4 tasks on 1 node (multi-GPU same node)
+
+
+
+#xxxxx --constraint=highmem # only needed for CPU
+
+
+
+module purge                          # Start with a clean environment
+module load intel mkl python
+source venv/bin/activate
+
+
+# Manually set the required environment variables for distributed training
+export MASTER_ADDR=$(scontrol show hostnames $SLURM_JOB_NODELIST | head -n 1)
+export MASTER_PORT=29501
+export WORLD_SIZE=4  # Number of processes (GPUs)
+export LOCAL_RANK=$SLURM_LOCALID  # Each task gets a local rank
+export RANK=$SLURM_PROCID  # This is the global rank of the process
+
+
+
+srun nsys profile -w true -t cuda,nvtx,osrt,cudnn,cublas   --capture-range=cudaProfilerApi -x true -o my_profile python GanScript.py -t -e 3           # Run the script using the loaded Python module

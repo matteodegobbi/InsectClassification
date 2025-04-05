@@ -1,0 +1,40 @@
+unload bsc/1.0 (PATH, MANPATH)
+Set INTEL compilers as MPI wrappers backend
+load GCC/11.4.0 (PATH, LD_LIBRARY_PATH, LIBRARY_PATH, C_INCLUDE_PATH,
+CPLUS_INCLUDE_PATH, CC, FC, F90, F77, CXX, OMPI_FC, OMPI_F90, OMPI_F77,
+OMPI_CC, OMPI_CXX) 
+load mkl/2024.2 (LD_LIBRARY_PATH)
+load impi/2021.13 (PATH, MANPATH, LD_LIBRARY_PATH)
+load HDF5/1.14.1-2 (PATH, LD_LIBRARY_PATH, LIBRARY_PATH, C_INCLUDE_PATH,
+CPLUS_INCLUDE_PATH, HDF5_DIR, HDF5_ROOT) 
+load PYTHON/3.12.1 (PATH, MANPATH, LD_LIBRARY_PATH, LIBRARY_PATH,
+PKG_CONFIG_PATH, C_INCLUDE_PATH, CPLUS_INCLUDE_PATH, PYTHONHOME, PYTHONPATH) 
+Training for 3 epochs
+Training for 3 epochs
+Training for 3 epochs
+Training for 3 epochs
+/gpfs/home/nct/nct01098/InsectClassification/modelReACGAN.py:178: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast() if self.mixed_precision and not eval else dummy_context_mgr() as mp:
+/gpfs/home/nct/nct01098/InsectClassification/modelReACGAN.py:178: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast() if self.mixed_precision and not eval else dummy_context_mgr() as mp:
+/gpfs/home/nct/nct01098/InsectClassification/modelReACGAN.py:178: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast() if self.mixed_precision and not eval else dummy_context_mgr() as mp:
+/gpfs/home/nct/nct01098/InsectClassification/modelReACGAN.py:178: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast() if self.mixed_precision and not eval else dummy_context_mgr() as mp:
+disc loss=3.8984375,gen loss=4.8515625
+disc loss=4.00390625,gen loss=4.77734375
+disc loss=4.44140625,gen loss=4.44140625
+disc loss=3.220703125,gen loss=4.99609375
+disc loss=2.759765625,gen loss=4.30859375
+disc loss=2.9921875,gen loss=4.67578125
+disc loss=2.896484375,gen loss=4.30078125
+disc loss=3.443359375,gen loss=4.7421875
+disc loss=2.62890625,gen loss=4.40234375
+disc loss=3.134765625,gen loss=4.453125
+disc loss=3.416015625,gen loss=4.28125
+disc loss=3.298828125,gen loss=4.3984375
+Saving model weights at checkpoints/ImageGANWeights
+Saving model weights at checkpoints/ImageGANWeights
+Saving model weights at checkpoints/ImageGANWeights
+Saving model weights at checkpoints/ImageGANWeights
+Job completed in 110 seconds.
